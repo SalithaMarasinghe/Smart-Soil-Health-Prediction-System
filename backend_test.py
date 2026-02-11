@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 
 class SmartSoilAPITester:
-    def __init__(self, base_url="https://farmsoiltech.preview.emergentagent.com"):
+    def __init__(self, base_url="http://localhost:8000"):
         self.base_url = base_url
         self.api_base = f"{base_url}/api"
         self.tests_run = 0
