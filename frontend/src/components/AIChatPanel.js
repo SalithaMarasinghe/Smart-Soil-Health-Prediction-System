@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageSquare, X, Send, Bot } from "lucide-react";
+import { MessageSquare, X, Send, Bot, Trash2 } from "lucide-react";
 import { apiService } from "../services/api";
 
 /**
@@ -22,12 +22,29 @@ import { apiService } from "../services/api";
  * @param {AIChatPanelProps} props 
  */
 const AIChatPanel = ({ isOpen, onClose }) => {
-  const [messages, setMessages] = useState([]);
+  // Initialize from localStorage
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem("chat_history");
+    return saved ? JSON.parse(saved) : [];
+  });
+  
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const panelRef = useRef(null);
+
+  // Persist to localStorage
+  useEffect(() => {
+    localStorage.setItem("chat_history", JSON.stringify(messages));
+  }, [messages]);
+
+  const clearHistory = () => {
+    if (window.confirm("Clear all chat history?")) {
+      setMessages([]);
+      localStorage.removeItem("chat_history");
+    }
+  };
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -126,12 +143,23 @@ const AIChatPanel = ({ isOpen, onClose }) => {
           </div>
           <span className="font-manrope font-bold text-foreground">AI Assistant</span>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {messages.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="p-2 hover:bg-red-50 rounded-full transition-colors text-muted-foreground hover:text-red-500"
+              title="Clear history"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Messages List */}

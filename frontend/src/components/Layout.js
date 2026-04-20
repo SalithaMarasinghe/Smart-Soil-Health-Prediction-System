@@ -53,6 +53,19 @@ export const Layout = ({ onLogout }) => {
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
+                {/* AI Assistant Toggle Button */}
+                <button
+                  onClick={toggleChat}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 ${isChatOpen
+                    ? "bg-primary text-white shadow-md shadow-primary/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  aria-label="Toggle AI Assistant"
+                >
+                  <MessageSquare className="w-4 h-4" strokeWidth={2} />
+                  <span className="text-xs font-bold tracking-wider">ASK AI</span>
+                </button>
+
                 <ThemeToggle />
                 <button
                   onClick={onLogout}
@@ -115,23 +128,6 @@ export const Layout = ({ onLogout }) => {
                 </Link>
               );
             })}
-
-            {/* AI Assistant Navigation Item */}
-            <div className="pt-4 mt-4 border-t border-border">
-              <button
-                onClick={() => {
-                  toggleChat();
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${isChatOpen
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-              >
-                <MessageSquare className="w-5 h-5" strokeWidth={2} />
-                <span>AI Assistant</span>
-              </button>
-            </div>
           </nav>
 
           <div className="p-4 border-t border-border">
