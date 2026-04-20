@@ -63,4 +63,8 @@ export const apiService = {
     const response = await axios.get(`${API}/analytics/realtime`);
     return response.data;
   },
+  sendChatMessage: async (message) => {
+    const response = await axios.post(`${API}/chat/message`, { message });
+    return response.data;
+  },
 };

@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 # Import routers
-from routers import dashboard, history, irrigation, npk, analytics
+from routers import dashboard, history, irrigation, npk, analytics, chat
 
 app = FastAPI(title="Smart Soil Health Monitoring System API")
 
@@ -30,6 +30,7 @@ app.include_router(history.router, prefix="/api")
 app.include_router(irrigation.router, prefix="/api")
 app.include_router(npk.router, prefix="/api")
 app.include_router(analytics.router, prefix="/api")
+app.include_router(chat.router) # Router already has /api/chat prefix
 
 # Configure logging
 logging.basicConfig(
