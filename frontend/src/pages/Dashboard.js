@@ -279,8 +279,10 @@ const Dashboard = () => {
           <div className="space-y-4">
             <div className="text-center py-4">
               <Cloud className="w-12 h-12 text-info mx-auto mb-3" strokeWidth={1.5} />
-              <p className="font-manrope font-bold text-3xl text-foreground mb-1">25mm</p>
-              <p className="text-sm text-muted-foreground">Expected rainfall</p>
+              <p className="font-manrope font-bold text-3xl text-foreground mb-1">
+                {waterloggingData ? `${waterloggingData.rainfall_forecast_mm.toFixed(1)}mm` : '--'}
+              </p>
+              <p className="text-sm text-muted-foreground">Expected rainfall (48h)</p>
             </div>
             <div className="pt-4 border-t border-border">
               <div className="flex items-center justify-between text-sm mb-2">

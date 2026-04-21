@@ -3,6 +3,7 @@ import random
 import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Any
+from services.weather_service import weather_service
 
 SOIL_CSV = Path(__file__).parent.parent / "data" / "soil_node1_full-1-2.csv"
 AIR_CSV  = Path(__file__).parent.parent / "data" / "air_node2_full-1.csv"
@@ -269,8 +270,23 @@ class DataStore:
         # Deduplicate columns if any (e.g. if humidity_pct existed in both)
         df = df.loc[:, ~df.columns.duplicated()]
         
-        # Handle rain_mm (add zeros if missing)
-        if 'rain_mm' not in df.columns:
+        # Handle rain_mm (Inject real past rainfall from Open-Meteo)
+        forecast = weather_service.get_weather_forecast()
+        real_rain_list = forecast.get("hourly_rain_mm", [])
+        
+        if real_rain_list:
+            # Open-Meteo returns 72+ hours starting from 00:00 today.
+            # We want to match the most recent rain values to the most recent sensor rows.
+            num_rows = len(df)
+            # Use the first num_rows of the forecast (simplified matching)
+            # Alternatively, match the last num_rows if we assume the forecast includes current time.
+            rain_values = real_rain_list[:num_rows]
+            
+            if len(rain_values) < num_rows:
+                rain_values += [0.0] * (num_rows - len(rain_values))
+            
+            df['rain_mm'] = rain_values
+        else:
             df['rain_mm'] = 0.0
             
         # Return only the required 5 columns
