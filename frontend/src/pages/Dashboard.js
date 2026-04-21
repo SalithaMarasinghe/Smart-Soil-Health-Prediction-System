@@ -284,10 +284,10 @@ const Dashboard = () => {
               </p>
               <p className="text-sm text-muted-foreground">Expected rainfall (48h)</p>
             </div>
-            <div className="pt-4 border-t border-border">
-              <div className="flex items-center justify-between text-sm mb-2">
+            <div className="pt-4 border-t border-border mt-3">
+              <div className="flex items-center justify-between text-sm mb-3">
                 <span className="text-muted-foreground">Temperature</span>
-                <span className="font-semibold">{status?.air_temp}°C</span>
+                <span className="font-semibold">{status?.air_temp?.toFixed(1)}°C</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Humidity</span>

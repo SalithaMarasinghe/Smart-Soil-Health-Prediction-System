@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, X, Send, Bot, Trash2 } from "lucide-react";
 import { apiService } from "../services/api";
+import FormattedMessage from "./FormattedMessage";
 
 /**
  * @typedef {Object} Message
@@ -215,7 +216,9 @@ const AIChatPanel = ({ isOpen, onClose }) => {
             </div>
           </div>
         ) : (
-          messages.map((msg) => (
+          messages
+            .filter(msg => !msg.content.startsWith("[FIELD STATUS"))
+            .map((msg) => (
             <div
               key={msg.id}
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
@@ -230,10 +233,10 @@ const AIChatPanel = ({ isOpen, onClose }) => {
                   }
                 `}
               >
-                {msg.content}
+                <FormattedMessage content={msg.content} role={msg.role} />
               </div>
             </div>
-          ))
+            ))
         )}
         
         {/* Typing Indicator */}

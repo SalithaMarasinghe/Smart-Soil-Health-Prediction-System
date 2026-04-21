@@ -24,7 +24,7 @@ def get_waterlogging_context_block() -> str:
     try:
         # Call service directly to avoid internal HTTP deadlock
         data = dashboard_service.get_waterlogging_risk()
-        print(f"[CHAT INIT DEBUG] moisture={data.get('current_moisture')} wfps={data.get('current_wfps')} rain={data.get('rainfall_forecast_mm')}")
+        print(f"[FULL API RESPONSE] {data}")
         
         # Get Colombo time
         colombo_tz = pytz.timezone('Asia/Colombo')
@@ -34,19 +34,24 @@ def get_waterlogging_context_block() -> str:
         risk_level = data.get('risk_level', 'Unknown')
         ml_class = data.get('ml_risk_class', 'Unknown')
         ml_conf = data.get('ml_confidence', 0)
-        moisture = data.get('current_moisture', 0)
-        hrs_to_event = data.get('time_to_event_hours', 0)
+        current_moisture = data.get('current_moisture', 0)
+        current_wfps = data.get('current_wfps', 0)
+        peak_wfps = data.get('peak_wfps_predicted', 0)
+        time_to_event_hours = data.get('time_to_event_hours', 0)
         rain_6h = data.get('rain_next_6h_mm', 0)
         rain_24h = data.get('rain_next_24h_mm', 0)
+        rainfall_forecast = data.get('rainfall_forecast_mm', 0)
         cause = data.get('cause', 'No specific cause identified')
         actions = data.get('actions', [])
         
         context = f"""[FIELD STATUS - {now}]
 Risk: {risk_level} | ML: {ml_class} ({ml_conf * 100:.0f}% confidence)
-Soil moisture: {moisture:.1f}% | Hours to waterlogging: {hrs_to_event}h
-Rain next 6h: {rain_6h}mm | Next 24h: {rain_24h}mm
+Soil moisture: {current_moisture:.1f}% | Current WFPS: {current_wfps:.1f}% | Peak WFPS predicted: {peak_wfps:.1f}%
+Hours to waterlogging: {time_to_event_hours}h
+Rain (48h forecast): {rainfall_forecast}mm | Next 6h: {rain_6h}mm | Next 24h: {rain_24h}mm
 Assessment: {cause}
 Actions: {", ".join(actions) if actions else "None required"}"""
+        print(f"[CONTEXT BLOCK] {context}")
         return context
     except Exception as e:
         logger.error(f"Failed to fetch waterlogging context: {e}")
