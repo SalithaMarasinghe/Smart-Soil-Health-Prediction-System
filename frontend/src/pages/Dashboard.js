@@ -3,6 +3,11 @@ import { apiService } from "../services/api";
 import { CheckCircle, AlertTriangle, AlertCircle, Cloud, Clock } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { toast } from "sonner";
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, Legend, ReferenceLine 
+} from "recharts";
+import { format } from "date-fns";
 
 import IrrigationOverviewCard from "../components/dashboard/IrrigationOverviewCard";
 import PhOverviewCard from "../components/dashboard/PhOverviewCard";
@@ -12,6 +17,8 @@ const Dashboard = () => {
   const [alerts, setAlerts] = useState([]);
   const [irrigationData, setIrrigationData] = useState(null);
   const [phData, setPhData] = useState(null);
+  const [waterloggingData, setWaterloggingData] = useState(null);
+  const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -35,6 +42,23 @@ const Dashboard = () => {
         prediction_30d: phRes.predictions["30d"],
         trend: phRes.current_status.trend
       });
+
+      // Change 1 — Add a waterlogging fetch to the main dashboard
+      try {
+        const wlRes = await apiService.getWaterloggingRisk();
+        setWaterloggingData(wlRes);
+      } catch (e) {
+        console.error("Waterlogging fetch failed:", e);
+      }
+
+      // Fetch history for WFPS trend chart (Change 3)
+      try {
+        const histRes = await apiService.getHistory("soil_moisture", 3);
+        setHistoryData(histRes.data);
+      } catch (e) {
+        console.error("History fetch failed:", e);
+      }
+
       setLastUpdated(new Date());
       setLoading(false);
     } catch (error) {
@@ -62,9 +86,26 @@ const Dashboard = () => {
   };
 
   const getRiskBorderColor = (risk) => {
-    if (risk === "high") return "border-t-danger";
+    if (risk === "high" || risk === "critical") return "border-t-danger";
     if (risk === "medium") return "border-t-warning";
     return "border-t-success";
+  };
+
+  const getMlRiskStyles = (riskClass) => {
+    switch (riskClass?.toLowerCase()) {
+      case 'critical':
+        return "border-danger bg-danger/5 animate-pulse";
+      case 'high':
+        return "border-orange-500 bg-orange-500/5";
+      case 'medium':
+        return "border-amber-500 bg-amber-500/5";
+      case 'low':
+        return "border-blue-500 bg-blue-500/5";
+      case 'safe':
+        return "border-success bg-success/5";
+      default:
+        return "border-border";
+    }
   };
 
   if (loading) {
@@ -82,11 +123,19 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Header with Last Updated */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="font-manrope font-bold text-3xl md:text-4xl text-foreground tracking-tight">
-            Dashboard
-          </h2>
-          <p className="text-muted-foreground mt-1">Real-time soil health monitoring</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h2 className="font-manrope font-bold text-3xl md:text-4xl text-foreground tracking-tight">
+              Dashboard
+            </h2>
+            <p className="text-muted-foreground mt-1">Real-time soil health monitoring</p>
+          </div>
+          {/* Change 4 — Update the dashboard page title or header status chip */}
+          {waterloggingData && (
+            <div className={`px-3 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${getMlRiskStyles(waterloggingData.ml_risk_class)}`}>
+              {waterloggingData.ml_risk_class}
+            </div>
+          )}
         </div>
         {lastUpdated && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -96,42 +145,71 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {/* NPK Status Card */}
+      {/* Main Grid — Change 2 — Add a Waterlogging Forecast Summary Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
+        {/* NPK Status Card — Fix 2 — Format NPK values */}
         <Card
           data-testid="npk-status-card"
-          className={`p-6 border-t-4 ${status?.npk_status?.nitrogen === "adequate" &&
+          className={`p-6 border-t-4 min-w-0 overflow-hidden ${status?.npk_status?.nitrogen === "adequate" &&
             status?.npk_status?.phosphorus === "adequate" &&
             status?.npk_status?.potassium === "adequate"
             ? "border-t-success"
             : "border-t-warning"} hover:shadow-md`}
         >
-          <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground">Current NPK Levels</h3>
+          <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground truncate">Current NPK Levels</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getStatusIcon(status?.npk_status?.nitrogen)}
                 <span className="text-sm font-medium">Nitrogen (N)</span>
               </div>
-              <span className="font-manrope font-bold text-lg">{status?.nitrogen} <span className="text-xs text-muted-foreground">mg/kg</span></span>
+              <span className="font-manrope font-bold text-lg">{status?.nitrogen?.toFixed(1)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getStatusIcon(status?.npk_status?.phosphorus)}
                 <span className="text-sm font-medium">Phosphorus (P)</span>
               </div>
-              <span className="font-manrope font-bold text-lg">{status?.phosphorus} <span className="text-xs text-muted-foreground">mg/kg</span></span>
+              <span className="font-manrope font-bold text-lg">{status?.phosphorus?.toFixed(1)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getStatusIcon(status?.npk_status?.potassium)}
                 <span className="text-sm font-medium">Potassium (K)</span>
               </div>
-              <span className="font-manrope font-bold text-lg">{status?.potassium} <span className="text-xs text-muted-foreground">mg/kg</span></span>
+              <span className="font-manrope font-bold text-lg">{status?.potassium?.toFixed(1)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-4">All nutrients at optimal levels</p>
+        </Card>
+
+        {/* Change 2 — Waterlogging Forecast KPI Card — Fix 3 — Layout issues */}
+        <Card
+          data-testid="ml-forecast-card"
+          className={`p-6 border-t-4 transition-all duration-300 min-w-0 overflow-hidden ${waterloggingData?.ml_alert_active ? "border-danger ring-2 ring-danger animate-pulse" : getMlRiskStyles(waterloggingData?.ml_risk_class)}`}
+        >
+          <h3 className="font-manrope font-semibold text-lg mb-2 text-foreground flex items-center gap-2 truncate">
+            <Cloud className="w-4 h-4 text-primary" />
+            Forecast
+          </h3>
+          <div className="flex flex-col items-center justify-center py-2">
+            <p className="font-manrope font-bold text-4xl text-foreground">
+              {waterloggingData?.ml_hours_until_waterlogging?.toFixed(1) ?? '--'}
+              <span className="text-sm font-medium text-muted-foreground ml-1">hrs</span>
+            </p>
+            <p className={`font-manrope font-bold text-lg uppercase mt-1 truncate ${getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === 'danger' ? 'text-danger' : ''}`}>
+              {waterloggingData?.ml_risk_class ?? 'Loading...'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Confidence: {((waterloggingData?.ml_confidence ?? 0) * 100).toFixed(0)}%
+            </p>
+          </div>
+          {waterloggingData?.ml_alert_active && (
+            <div className="flex items-center gap-2 justify-center mt-2">
+              <div className="w-2 h-2 rounded-full bg-danger animate-ping"></div>
+              <span className="text-[10px] font-bold text-danger uppercase tracking-tighter">Active Prediction Alert</span>
+            </div>
+          )}
         </Card>
 
         {/* Irrigation Overview Card */}
@@ -140,27 +218,27 @@ const Dashboard = () => {
         {/* pH Overview Card */}
         <PhOverviewCard data={phData} />
 
-        {/* Waterlogging Risk Card */}
+        {/* Waterlogging Risk Card — Fix 4 — Sync with ML risk class */}
         <Card
           data-testid="waterlogging-risk-card"
-          className={`p-6 border-t-4 ${getRiskBorderColor(status?.waterlogging_risk)} hover:shadow-md transition-shadow duration-200`}
+          className={`p-6 border-t-4 min-w-0 overflow-hidden ${getRiskBorderColor(waterloggingData?.ml_risk_class?.toLowerCase())} hover:shadow-md transition-shadow duration-200`}
         >
-          <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground">Waterlogging Risk</h3>
+          <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground truncate">Current Status</h3>
           <div className="flex items-center justify-center py-6">
             <div className="text-center">
-              <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-3 ${status?.waterlogging_risk === "high" ? "bg-danger/10" :
-                status?.waterlogging_risk === "medium" ? "bg-warning/10" : "bg-success/10"
+              <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-3 ${getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === "danger" ? "bg-danger/10" :
+                getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === "warning" ? "bg-warning/10" : "bg-success/10"
                 }`}>
-                <Cloud className={`w-10 h-10 ${status?.waterlogging_risk === "high" ? "text-danger" :
-                  status?.waterlogging_risk === "medium" ? "text-warning" : "text-success"
+                <Cloud className={`w-10 h-10 ${getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === "danger" ? "text-danger" :
+                  getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === "warning" ? "text-warning" : "text-success"
                   }`} strokeWidth={1.5} />
               </div>
-              <p className={`font-manrope font-bold text-2xl uppercase mb-2 ${status?.waterlogging_risk === "high" ? "text-danger" :
-                status?.waterlogging_risk === "medium" ? "text-warning" : "text-success"
+              <p className={`font-manrope font-bold text-2xl uppercase mb-2 ${getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === "danger" ? "text-danger" :
+                getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === "warning" ? "text-warning" : "text-success"
                 }`}>
-                {status?.waterlogging_risk}
+                {waterloggingData?.ml_risk_class ?? status?.waterlogging_risk}
               </p>
-              <p className="text-sm text-muted-foreground">WFPS: {status?.wfps}%</p>
+              <p className="text-sm text-muted-foreground">WFPS: {status?.wfps?.toFixed(1)}%</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Heavy rain expected in 48 hours</p>
@@ -281,6 +359,66 @@ const Dashboard = () => {
             </div>
           </div>
         </Card>
+      </div>
+
+      {/* Change 3 — Add a WFPS Trend Chart with Forecast Marker */}
+      <Card className="p-6">
+        <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground">Soil Moisture & WFPS Trend</h3>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={historyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.5} />
+              <XAxis 
+                dataKey="timestamp" 
+                tickFormatter={(val) => format(new Date(val), "HH:mm")}
+                stroke="hsl(var(--chart-axis))"
+                style={{ fontSize: "12px" }}
+              />
+              <YAxis 
+                stroke="hsl(var(--chart-axis))"
+                style={{ fontSize: "12px" }}
+                label={{ value: '%', angle: -90, position: 'insideLeft', fill: 'hsl(var(--chart-axis))' }}
+              />
+              <Tooltip 
+                labelFormatter={(val) => format(new Date(val), "MMM dd, HH:mm")}
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+              />
+              <Legend />
+              {/* Vertical Reference Line for Predicted Event */}
+              {waterloggingData?.ml_hours_until_waterlogging && (
+                <ReferenceLine 
+                  x={new Date(Date.now() + (waterloggingData.ml_hours_until_waterlogging) * 3600000).toISOString()} 
+                  stroke={waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8"} 
+                  strokeDasharray="5 5"
+                  label={{ 
+                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(1)}h)`, 
+                    fill: waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8",
+                    fontSize: 10,
+                    position: 'top'
+                  }} 
+                />
+              )}
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                name="Soil Moisture (%)" 
+                stroke="#0284C7" 
+                strokeWidth={2} 
+                dot={false} 
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      {/* Change 5 — Add a "Model Info" footer line */}
+      <div className="flex justify-between items-center px-2 py-4 border-t border-border mt-6">
+        <p className="text-xs text-muted-foreground italic">
+          ML Source: {waterloggingData?.ml_source ?? 'rf_classifier + xgb_regressor'} | Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : 'N/A'}
+        </p>
+        <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+          Proprietary Prediction Engine v2.1
+        </p>
       </div>
     </div>
   );

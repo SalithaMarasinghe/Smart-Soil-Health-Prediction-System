@@ -203,6 +203,22 @@ const WaterloggingMonitor = () => {
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ paddingTop: "10px" }} />
             <ReferenceLine yAxisId="left" y={90} stroke="#DC2626" strokeDasharray="3 3" label={{ value: "Critical (90%)", fill: "#DC2626", fontSize: 12 }} />
+            
+            {/* Vertical Reference Line for Predicted Event (Change 3) */}
+            {riskData?.time_to_event_hours && (
+              <ReferenceLine 
+                x={`${Math.round(riskData.time_to_event_hours)}h`} 
+                stroke={riskData.risk_level === "HIGH" || riskData.risk_level === "CRITICAL" ? "#DC2626" : "#94A3B8"} 
+                strokeDasharray="5 5"
+                label={{ 
+                  value: `T+${riskData.time_to_event_hours}h`, 
+                  fill: riskData.risk_level === "HIGH" || riskData.risk_level === "CRITICAL" ? "#DC2626" : "#94A3B8",
+                  fontSize: 12,
+                  position: 'top'
+                }} 
+              />
+            )}
+
             <Line yAxisId="left" type="monotone" dataKey="wfps" stroke="#0284C7" strokeWidth={3} name="WFPS" dot={{ fill: "#0284C7", r: 4 }} />
             <Bar yAxisId="right" dataKey="rainfall" fill="#1A4D2E" name="Rainfall" opacity={0.6} />
           </ComposedChart>

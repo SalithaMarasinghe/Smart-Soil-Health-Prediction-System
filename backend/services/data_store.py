@@ -1,10 +1,21 @@
 from datetime import datetime, timedelta, timezone
 import random
+import pandas as pd
+from pathlib import Path
 from typing import List, Dict, Any
+
+SOIL_CSV = Path(__file__).parent.parent / "data" / "soil_node1_full-1-2.csv"
+AIR_CSV  = Path(__file__).parent.parent / "data" / "air_node2_full-1.csv"
 
 class DataStore:
     def __init__(self):
-        self.historical_data = self._generate_historical_data()
+        try:
+            self.historical_data = self._load_real_data()
+            print(f"Loaded {len(self.historical_data)} real sensor records")
+        except Exception as e:
+            print(f"WARNING: Could not load real data ({e}), falling back to mock data")
+            self.historical_data = self._generate_historical_data()
+            
         self.alerts = self._generate_alerts()
         self.irrigation_history = self._generate_irrigation_history()
         self.ph_history = self._generate_ph_history()
@@ -56,6 +67,78 @@ class DataStore:
             })
         
         return data
+
+    def _load_real_data(self):
+        """Load real sensor data from CSV files"""
+        # 1. Read SOIL_CSV
+        soil_df = pd.read_csv(SOIL_CSV)
+        soil_df = soil_df.rename(columns={'hour': 'timestamp'})
+        soil_df['timestamp'] = pd.to_datetime(soil_df['timestamp'])
+        
+        # 2. Read AIR_CSV
+        air_df = pd.read_csv(AIR_CSV)
+        air_df = air_df.rename(columns={'hour': 'timestamp'})
+        air_df['timestamp'] = pd.to_datetime(air_df['timestamp'])
+        
+        # 3. Rename air temperature column
+        # Possible names: air_temp_c, temperature, temp, air_temperature
+        air_rename_map = {}
+        for col in ['air_temp_c', 'temperature', 'temp', 'air_temperature']:
+            if col in air_df.columns:
+                air_rename_map[col] = 'air_temp'
+                break
+        
+        # Rename humidity if needed (using 'humidity' as target for internal dict)
+        if 'humidity_pct' in air_df.columns:
+            air_rename_map['humidity_pct'] = 'humidity'
+            
+        air_df = air_df.rename(columns=air_rename_map)
+        
+        # 4. Merge DataFrames on timestamp
+        # Drop overlapping columns from air_df except timestamp to avoid _x/_y suffixes
+        cols_to_drop = [c for c in air_df.columns if c in soil_df.columns and c != 'timestamp']
+        air_df_clean = air_df.drop(columns=cols_to_drop)
+        
+        merged = pd.merge(soil_df, air_df_clean, on='timestamp', how='inner')
+        
+        # 5. Sort and reset index
+        merged = merged.sort_values('timestamp').reset_index(drop=True)
+        
+        # 6. Ensure required columns exist
+        col_map = {
+            'moisture_pct': 'soil_moisture',
+            'soil_temp_c': 'soil_temp',
+            'ec_mscm': 'ec',
+            'nitrogen_mgkg': 'nitrogen',
+            'phosphorus_mgkg': 'phosphorus',
+            'potassium_mgkg': 'potassium'
+        }
+        merged = merged.rename(columns={k: v for k, v in col_map.items() if k in merged.columns})
+        
+        # Add missing columns or fill NaNs with defaults
+        defaults = {
+            'nitrogen': 180,
+            'phosphorus': 35,
+            'potassium': 220,
+            'ec': 1.2,
+            'pH': 6.5,
+            'soil_moisture': 35.0,
+            'soil_temp': 26.0,
+            'air_temp': 28.0,
+            'humidity': 75.0
+        }
+        
+        for col, val in defaults.items():
+            if col not in merged.columns:
+                merged[col] = val
+            else:
+                merged[col] = merged[col].fillna(val)
+                
+        # 7. Convert timestamp to ISO format strings
+        merged['timestamp'] = merged['timestamp'].dt.strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        
+        # 8. Convert to records
+        return merged.to_dict(orient='records')
     
     def _generate_alerts(self):
         """Generate active alerts"""
@@ -154,11 +237,51 @@ class DataStore:
         return self.historical_data[-1]
     
     def get_history(self, parameter: str, days: int):
-        """Get historical data for a specific parameter"""
+        """Get historical data for a specific parameter (Used by Charting)"""
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         filtered = [d for d in self.historical_data if datetime.fromisoformat(d["timestamp"]) >= cutoff]
         
         return [{"timestamp": d["timestamp"], "value": d.get(parameter, 0)} for d in filtered]
+
+    def get_history_df(self, hours: int = 72):
+        """Get historical sensor data as a formatted DataFrame for ML"""
+        # Slice last N hours by position to avoid timestamp filtering issues
+        raw = self.historical_data[-hours:]
+        
+        # Step 3 — Add a row count safety check
+        if not raw:
+            return pd.DataFrame(columns=['timestamp', 'wfps_pct', 'temperature_c', 'humidity_pct', 'rain_mm'])
+            
+        df = pd.DataFrame(raw)
+        
+        # Convert timestamp to datetime objects
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        
+        # Compute wfps_pct: (soil_moisture / 50) * 100
+        df['wfps_pct'] = (df['soil_moisture'] / 50) * 100
+        
+        # required: timestamp, wfps_pct, temperature_c, humidity_pct, rain_mm
+        df = df.rename(columns={
+            'air_temp': 'temperature_c',
+            'humidity': 'humidity_pct'
+        })
+        
+        # Deduplicate columns if any (e.g. if humidity_pct existed in both)
+        df = df.loc[:, ~df.columns.duplicated()]
+        
+        # Handle rain_mm (add zeros if missing)
+        if 'rain_mm' not in df.columns:
+            df['rain_mm'] = 0.0
+            
+        # Return only the required 5 columns
+        required_cols = ['timestamp', 'wfps_pct', 'temperature_c', 'humidity_pct', 'rain_mm']
+        return df[required_cols]
+
+    def get_all_history(self, hours: int):
+        """Get all historical sensor data for the last X hours (Deprecated - use get_history_df)"""
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        filtered = [d for d in self.historical_data if datetime.fromisoformat(d["timestamp"]) >= cutoff]
+        return filtered
 
 # Singleton instance
 data_store = DataStore()
