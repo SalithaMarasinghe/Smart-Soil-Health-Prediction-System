@@ -20,7 +20,7 @@ export const apiService = {
   },
 
   getHistory: async (parameter, days = 7) => {
-    const response = await axios.get(`${API}/history?parameter=${parameter}&days=${days}`);
+    const response = await axios.get(`${API}/sensor-history?parameter=${parameter}&days=${days}`);
     return response.data;
   },
 

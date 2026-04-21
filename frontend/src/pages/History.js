@@ -49,7 +49,7 @@ const History = () => {
     setLoading(true);
     try {
       const data = await apiService.getHistory(selectedParameter, selectedDays);
-      setHistoryData(data.data);
+      setHistoryData(data); // Store the full response object
       setLoading(false);
     } catch (error) {
       console.error("Error fetching history:", error);
@@ -71,9 +71,11 @@ const History = () => {
 
   const exportToCSV = () => {
     const paramInfo = getParameterInfo();
+    if (!historyData?.data) return;
+
     const csv = [
       ["Timestamp", `${paramInfo.label} (${paramInfo.unit})`],
-      ...historyData.map((item) => [
+      ...historyData.data.map((item) => [
         format(new Date(item.timestamp), "yyyy-MM-dd HH:mm:ss"),
         item.value,
       ]),
@@ -108,12 +110,14 @@ const History = () => {
   };
 
   const calculateStats = () => {
-    if (historyData.length === 0) return { min: 0, max: 0, avg: 0, latest: 0 };
+    if (!historyData || !historyData.data || historyData.data.length === 0) {
+      return { min: 0, max: 0, avg: 0, latest: 0 };
+    }
 
-    const values = historyData.map((d) => d.value);
+    const values = historyData.data.map((d) => d.value);
     return {
-      min: Math.min(...values).toFixed(2),
-      max: Math.max(...values).toFixed(2),
+      min: historyData.min_value?.toFixed(2) || Math.min(...values).toFixed(2),
+      max: historyData.max_value?.toFixed(2) || Math.max(...values).toFixed(2),
       avg: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2),
       latest: values[values.length - 1]?.toFixed(2),
     };
@@ -215,7 +219,7 @@ const History = () => {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={formatChartData()}>
+            <LineChart data={historyData?.data || []}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.5} />
               <XAxis
                 dataKey="timestamp"
@@ -261,7 +265,7 @@ const History = () => {
               </tr>
             </thead>
             <tbody>
-              {historyData.slice().reverse().map((item, index) => (
+              {(historyData?.data || []).slice().reverse().map((item, index) => (
                 <tr key={index} className="border-b border-border hover:bg-muted/50 transition-colors">
                   <td className="py-3 px-2 text-sm">
                     {format(new Date(item.timestamp), "MMM dd, yyyy HH:mm:ss")}

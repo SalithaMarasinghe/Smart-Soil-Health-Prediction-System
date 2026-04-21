@@ -105,18 +105,33 @@ class DataStore:
         # 5. Sort and reset index
         merged = merged.sort_values('timestamp').reset_index(drop=True)
         
-        # 6. Ensure required columns exist
-        col_map = {
+        # Step 1 — Update _load_real_data() to handle NaN rows
+        # Drop rows where all key sensor values are NaN
+        key_cols = ['moisture_pct', 'soil_temp_c', 'wfps_pct', 'air_temp', 'humidity']
+        # Check which of these are actually in the dataframe before dropping
+        existing_keys = [c for c in key_cols if c in merged.columns]
+        if existing_keys:
+            merged = merged.dropna(subset=existing_keys, how='all')
+
+        # Forward-fill remaining NaN values so charts have no gaps
+        merged = merged.ffill().bfill()
+
+        # Step 2 — Ensure all history columns are correctly named
+        merged = merged.rename(columns={
+            'hour': 'timestamp',
             'moisture_pct': 'soil_moisture',
             'soil_temp_c': 'soil_temp',
+            'air_temp_c': 'air_temp',
+            'humidity_pct': 'humidity',
+            'pH': 'pH',
             'ec_mscm': 'ec',
             'nitrogen_mgkg': 'nitrogen',
             'phosphorus_mgkg': 'phosphorus',
-            'potassium_mgkg': 'potassium'
-        }
-        merged = merged.rename(columns={k: v for k, v in col_map.items() if k in merged.columns})
+            'potassium_mgkg': 'potassium',
+            'wfps_pct': 'wfps'
+        })
         
-        # Add missing columns or fill NaNs with defaults
+        # Add missing columns or fill NaNs with defaults (final safety pass)
         defaults = {
             'nitrogen': 180,
             'phosphorus': 35,
@@ -126,7 +141,8 @@ class DataStore:
             'soil_moisture': 35.0,
             'soil_temp': 26.0,
             'air_temp': 28.0,
-            'humidity': 75.0
+            'humidity': 75.0,
+            'wfps': 70.0
         }
         
         for col, val in defaults.items():
@@ -236,13 +252,53 @@ class DataStore:
     def get_current_data(self):
         """Get the most recent sensor reading"""
         return self.historical_data[-1]
-    
+
     def get_history(self, parameter: str, days: int):
         """Get historical data for a specific parameter (Used by Charting)"""
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         filtered = [d for d in self.historical_data if datetime.fromisoformat(d["timestamp"]) >= cutoff]
         
         return [{"timestamp": d["timestamp"], "value": d.get(parameter, 0)} for d in filtered]
+
+    # Step 3 — Add get_history_for_parameter() method
+    def get_history_for_parameter(self, parameter: str, days: int = 7) -> list:
+        try:
+            df = pd.DataFrame(self.historical_data)
+            df['timestamp_dt'] = pd.to_datetime(df['timestamp'])
+            
+            cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+            df = df[df['timestamp_dt'] >= cutoff]
+            
+            param_map = {
+                "nitrogen": "nitrogen",
+                "phosphorus": "phosphorus",
+                "potassium": "potassium",
+                "soil_moisture": "soil_moisture",
+                "ph": "pH",
+                "ph_level": "pH",
+                "soil_temp": "soil_temp",
+                "air_temp": "air_temp",
+                "humidity": "humidity",
+                "wfps": "wfps"
+            }
+            
+            col_name = param_map.get(parameter.lower(), parameter)
+            if col_name not in df.columns:
+                return []
+                
+            # Extract timestamp and mapped column, drop NaNs
+            result_df = df[['timestamp', col_name]].dropna(subset=[col_name])
+            
+            # Round values
+            result_df[col_name] = result_df[col_name].round(2)
+            
+            return [
+                {"timestamp": row['timestamp'], "value": row[col_name]} 
+                for _, row in result_df.iterrows()
+            ]
+        except Exception as e:
+            print(f"Error in get_history_for_parameter: {e}")
+            return []
 
     def get_history_df(self, hours: int = 72):
         """Get historical sensor data as a formatted DataFrame for ML"""

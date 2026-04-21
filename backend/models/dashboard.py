@@ -46,3 +46,11 @@ class WaterloggingRiskResponse(BaseModel):
     rain_next_24h_mm: float = 0.0
     peak_rain_hour: str = ""
     hourly_forecast: Optional[List[Dict]] = None
+
+class SensorHistoryResponse(BaseModel):
+    parameter: str
+    days: int
+    data: List[Dict]
+    count: int
+    min_value: float = 0.0
+    max_value: float = 0.0
