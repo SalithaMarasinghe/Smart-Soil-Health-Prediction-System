@@ -36,3 +36,9 @@ class WaterloggingRiskResponse(BaseModel):
     cause: str
     actions: List[str]
     potential_loss: float
+    ml_risk_class: str
+    ml_confidence: float
+    ml_risk_probabilities: Dict[str, float]
+    ml_hours_until_waterlogging: float
+    ml_alert_active: bool
+    ml_source: str

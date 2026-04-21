@@ -26,7 +26,7 @@ const IrrigationOverviewCard = ({ data }) => {
                 <div className="flex justify-between items-end mb-4">
                     <div>
                         <div className="text-2xl font-bold flex items-center gap-2">
-                            {current_status}%
+                            {current_status?.toFixed(1)}%
                             {current_status >= 40 && current_status <= 60 ? (
                                 <CheckCircle2 className="h-5 w-5 text-green-500" />
                             ) : (
