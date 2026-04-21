@@ -24,6 +24,7 @@ def get_waterlogging_context_block() -> str:
     try:
         # Call service directly to avoid internal HTTP deadlock
         data = dashboard_service.get_waterlogging_risk()
+        print(f"[CHAT INIT DEBUG] moisture={data.get('current_moisture')} wfps={data.get('current_wfps')} rain={data.get('rainfall_forecast_mm')}")
         
         # Get Colombo time
         colombo_tz = pytz.timezone('Asia/Colombo')
@@ -55,6 +56,8 @@ async def get_ai_reply(user_message: str, history: list = None, context_block: s
     """
     Get AI-generated reply from Gemini with full session memory and field context.
     """
+    print(f"[GET_AI_REPLY DEBUG] context_block preview: {context_block[:80] if context_block else 'EMPTY'}")
+    
     if history is None:
         history = []
         
