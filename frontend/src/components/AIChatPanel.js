@@ -30,6 +30,9 @@ const AIChatPanel = ({ isOpen, onClose }) => {
   
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [sessionContext, setSessionContext] = useState("");
+  const [sessionReady, setSessionReady] = useState(false);
+  const [isFirstMessage, setIsFirstMessage] = useState(true);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const panelRef = useRef(null);
@@ -39,12 +42,34 @@ const AIChatPanel = ({ isOpen, onClose }) => {
     localStorage.setItem("chat_history", JSON.stringify(messages));
   }, [messages]);
 
+  const fetchContext = async () => {
+    setSessionReady(false);
+    try {
+      const data = await apiService.initChat();
+      setSessionContext(data.context_block);
+    } catch (error) {
+      console.error("Failed to initialize chat context:", error);
+    } finally {
+      setSessionReady(true);
+    }
+  };
+
   const clearHistory = () => {
     if (window.confirm("Clear all chat history?")) {
       setMessages([]);
       localStorage.removeItem("chat_history");
+      setIsFirstMessage(true);
+      setSessionContext("");
+      fetchContext();
     }
   };
+
+  // Initialize context block from backend
+  useEffect(() => {
+    if (isOpen && !sessionReady && !sessionContext) {
+      fetchContext();
+    }
+  }, [isOpen, sessionReady, sessionContext]);
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -98,14 +123,29 @@ const AIChatPanel = ({ isOpen, onClose }) => {
     setInput("");
     setIsTyping(true);
 
+    // Prepare history
+    const formattedHistory = messages
+      .filter(m => m.content && !m.content.startsWith("[FIELD STATUS"))
+      .map(m => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content
+      }));
+
     try {
-      const response = await apiService.sendChatMessage(trimmedInput);
+      // Build request body based on isFirstMessage
+      const response = await apiService.sendChatMessage(
+        trimmedInput, 
+        isFirstMessage ? [] : formattedHistory,
+        isFirstMessage ? sessionContext : ""
+      );
+
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response.reply, // Extract the string from the response object
+        content: response.reply,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+      if (isFirstMessage) setIsFirstMessage(false);
     } catch (error) {
       const errorMessage = {
         id: (Date.now() + 1).toString(),
@@ -219,17 +259,36 @@ const AIChatPanel = ({ isOpen, onClose }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask about soil health, crops..."
-            disabled={isTyping}
+            disabled={!sessionReady || isTyping}
             className="flex-1 bg-muted border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 resize-none max-h-32 disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || isTyping}
+            disabled={!input.trim() || !sessionReady || isTyping}
             className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50 shrink-0"
           >
             <Send className="w-5 h-5" />
           </button>
         </form>
+        
+        {/* Status Line */}
+        <div className="mt-2 flex items-center gap-2">
+          {!sessionReady ? (
+            <>
+              <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                Connecting to field sensors...
+              </span>
+            </>
+          ) : (
+            <>
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-[10px] text-green-600 dark:text-green-400 font-medium uppercase tracking-wider">
+                Field sensors connected
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* CSS for typing indicator animation */}

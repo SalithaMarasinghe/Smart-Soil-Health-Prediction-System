@@ -3,9 +3,9 @@ import { apiService } from "../services/api";
 import { CheckCircle, AlertTriangle, AlertCircle, Cloud, Clock } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { toast } from "sonner";
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Legend, ReferenceLine 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend, ReferenceLine
 } from "recharts";
 import { format } from "date-fns";
 
@@ -370,43 +370,43 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={historyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.5} />
-              <XAxis 
-                dataKey="timestamp" 
+              <XAxis
+                dataKey="timestamp"
                 tickFormatter={(val) => format(new Date(val), "HH:mm")}
                 stroke="hsl(var(--chart-axis))"
                 style={{ fontSize: "12px" }}
               />
-              <YAxis 
+              <YAxis
                 stroke="hsl(var(--chart-axis))"
                 style={{ fontSize: "12px" }}
                 label={{ value: '%', angle: -90, position: 'insideLeft', fill: 'hsl(var(--chart-axis))' }}
               />
-              <Tooltip 
+              <Tooltip
                 labelFormatter={(val) => format(new Date(val), "MMM dd, HH:mm")}
                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
               />
               <Legend />
               {/* Vertical Reference Line for Predicted Event */}
               {waterloggingData?.ml_hours_until_waterlogging && (
-                <ReferenceLine 
-                  x={new Date(Date.now() + (waterloggingData.ml_hours_until_waterlogging) * 3600000).toISOString()} 
-                  stroke={waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8"} 
+                <ReferenceLine
+                  x={new Date(Date.now() + (waterloggingData.ml_hours_until_waterlogging) * 3600000).toISOString()}
+                  stroke={waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8"}
                   strokeDasharray="5 5"
-                  label={{ 
-                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(1)}h)`, 
+                  label={{
+                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(1)}h)`,
                     fill: waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8",
                     fontSize: 10,
                     position: 'top'
-                  }} 
+                  }}
                 />
               )}
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                name="Soil Moisture (%)" 
-                stroke="#0284C7" 
-                strokeWidth={2} 
-                dot={false} 
+              <Line
+                type="monotone"
+                dataKey="value"
+                name="Soil Moisture (%)"
+                stroke="#0284C7"
+                strokeWidth={2}
+                dot={false}
               />
             </LineChart>
           </ResponsiveContainer>

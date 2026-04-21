@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { apiService } from "../services/api";
 import { Download, Calendar } from "lucide-react";
 import { Card } from "../components/ui/card";
@@ -41,11 +41,7 @@ const History = () => {
     { value: 30, label: "Last 30 days" },
   ];
 
-  useEffect(() => {
-    fetchData();
-  }, [selectedParameter, selectedDays]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiService.getHistory(selectedParameter, selectedDays);
@@ -56,7 +52,11 @@ const History = () => {
       toast.error("Failed to fetch historical data");
       setLoading(false);
     }
-  };
+  }, [selectedParameter, selectedDays]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const getParameterInfo = () => {
     return parameters.find((p) => p.value === selectedParameter);
