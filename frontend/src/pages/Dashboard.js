@@ -3,9 +3,9 @@ import { apiService } from "../services/api";
 import { CheckCircle, AlertTriangle, AlertCircle, Cloud, Clock } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { toast } from "sonner";
-import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Legend, ReferenceLine 
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend, ReferenceLine
 } from "recharts";
 import { format } from "date-fns";
 
@@ -279,13 +279,15 @@ const Dashboard = () => {
           <div className="space-y-4">
             <div className="text-center py-4">
               <Cloud className="w-12 h-12 text-info mx-auto mb-3" strokeWidth={1.5} />
-              <p className="font-manrope font-bold text-3xl text-foreground mb-1">25mm</p>
-              <p className="text-sm text-muted-foreground">Expected rainfall</p>
+              <p className="font-manrope font-bold text-3xl text-foreground mb-1">
+                {waterloggingData ? `${waterloggingData.rainfall_forecast_mm.toFixed(1)}mm` : '--'}
+              </p>
+              <p className="text-sm text-muted-foreground">Expected rainfall (48h)</p>
             </div>
-            <div className="pt-4 border-t border-border">
-              <div className="flex items-center justify-between text-sm mb-2">
+            <div className="pt-4 border-t border-border mt-3">
+              <div className="flex items-center justify-between text-sm mb-3">
                 <span className="text-muted-foreground">Temperature</span>
-                <span className="font-semibold">{status?.air_temp}°C</span>
+                <span className="font-semibold">{status?.air_temp?.toFixed(1)}°C</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Humidity</span>
@@ -368,43 +370,43 @@ const Dashboard = () => {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={historyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.5} />
-              <XAxis 
-                dataKey="timestamp" 
+              <XAxis
+                dataKey="timestamp"
                 tickFormatter={(val) => format(new Date(val), "HH:mm")}
                 stroke="hsl(var(--chart-axis))"
                 style={{ fontSize: "12px" }}
               />
-              <YAxis 
+              <YAxis
                 stroke="hsl(var(--chart-axis))"
                 style={{ fontSize: "12px" }}
                 label={{ value: '%', angle: -90, position: 'insideLeft', fill: 'hsl(var(--chart-axis))' }}
               />
-              <Tooltip 
+              <Tooltip
                 labelFormatter={(val) => format(new Date(val), "MMM dd, HH:mm")}
                 contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
               />
               <Legend />
               {/* Vertical Reference Line for Predicted Event */}
               {waterloggingData?.ml_hours_until_waterlogging && (
-                <ReferenceLine 
-                  x={new Date(Date.now() + (waterloggingData.ml_hours_until_waterlogging) * 3600000).toISOString()} 
-                  stroke={waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8"} 
+                <ReferenceLine
+                  x={new Date(Date.now() + (waterloggingData.ml_hours_until_waterlogging) * 3600000).toISOString()}
+                  stroke={waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8"}
                   strokeDasharray="5 5"
-                  label={{ 
-                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(1)}h)`, 
+                  label={{
+                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(1)}h)`,
                     fill: waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8",
                     fontSize: 10,
                     position: 'top'
-                  }} 
+                  }}
                 />
               )}
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                name="Soil Moisture (%)" 
-                stroke="#0284C7" 
-                strokeWidth={2} 
-                dot={false} 
+              <Line
+                type="monotone"
+                dataKey="value"
+                name="Soil Moisture (%)"
+                stroke="#0284C7"
+                strokeWidth={2}
+                dot={false}
               />
             </LineChart>
           </ResponsiveContainer>

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from services.data_store import data_store
+from services.weather_service import weather_service
 from models.dashboard import StatusResponse, WaterloggingRiskResponse
 import json
 import numpy as np
@@ -136,10 +137,16 @@ class DashboardService:
         print("rain_48h_forecast:", current_data.get("rain_48h_forecast", "MISSING"))
         print("=== END DEBUG ===")
 
+        # ── Real Weather Forecast ────────────────────────────────
+        forecast = weather_service.get_weather_forecast()
+        rainfall_forecast = round(forecast["rain_next_48h_mm"], 1)
+        rain_next_6h = round(forecast["rain_next_6h_mm"], 1)
+        rain_next_24h = round(forecast["rain_next_24h_mm"], 1)
+        peak_rain_hour = forecast.get("peak_rain_hour", "Unknown")
+
         # ── FIXED: correct WFPS (porosity 0.5) ───────────────────
         current_wfps = (current["soil_moisture"] / 50) * 100
 
-        rainfall_forecast  = 25   # mm simulated
         peak_wfps_predicted = min(current_wfps + (rainfall_forecast * 1.2), 200)
 
         rule_risk = (
@@ -196,7 +203,10 @@ class DashboardService:
             "peak_wfps_predicted": round(peak_wfps_predicted, 1),
             "duration_hours"            : 12,
             "rainfall_forecast_mm"      : rainfall_forecast,
-            "cause"                     : f"Heavy rain ({rainfall_forecast}mm) forecasted",
+            "rain_next_6h_mm"           : rain_next_6h,
+            "rain_next_24h_mm"          : rain_next_24h,
+            "peak_rain_hour"            : peak_rain_hour,
+            "cause"                     : f"Real forecast: {rainfall_forecast}mm rain expected in 48h (peak: {peak_rain_hour})",
             "actions"                   : actions,
             "potential_loss"            : potential_loss,
             "ml_risk_class"             : ml_risk_class,
@@ -205,6 +215,10 @@ class DashboardService:
             "ml_hours_until_waterlogging": round(ml_hours_until, 1),
             "ml_alert_active"           : ml_hours_until <= 24 and final_risk.lower() != "safe",
             "ml_source"                 : "rf_classifier + xgb_regressor",
+            "hourly_forecast"           : [
+                {"time": t, "rain": r} 
+                for t, r in zip(forecast["hourly_time"][:24], forecast["hourly_rain_mm"][:24])
+            ]
         }
 
 
