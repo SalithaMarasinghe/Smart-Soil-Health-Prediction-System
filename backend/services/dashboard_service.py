@@ -14,11 +14,21 @@ ATM_LEAD = 4
 
 @lru_cache(maxsize=1)
 def _load_models():
-    rf  = joblib.load(ML_DIR / "rf_classifier.joblib")
-    xgb = joblib.load(ML_DIR / "xgb_regressor.joblib")
+    # Waterlogging models
+    rf_wl  = joblib.load(ML_DIR / "rf_classifier.joblib")
+    xgb_wl = joblib.load(ML_DIR / "xgb_regressor.joblib")
     with open(ML_DIR / "feature_list.json",  "r") as f: features = json.load(f)
     with open(ML_DIR / "label_encoder.json", "r") as f: le_map   = json.load(f)
-    return rf, xgb, features, le_map
+    
+    # NPK/pH model (Multi-Output Regressor)
+    npk_model = joblib.load(ML_DIR / "NPK" / "cropiq_rf_model.pkl")
+    scaler_x = joblib.load(ML_DIR / "NPK" / "scaler_X.pkl")
+    scaler_y = joblib.load(ML_DIR / "NPK" / "scaler_y.pkl")
+    
+    return {
+        "waterlogging": (rf_wl, xgb_wl, features, le_map),
+        "npk_ph": (npk_model, scaler_x, scaler_y)
+    }
 
 
 def engineer_features_single(history_df: pd.DataFrame) -> dict:
@@ -156,7 +166,8 @@ class DashboardService:
         )
 
         # ── ML Inference ─────────────────────────────────────────
-        rf, xgb, features, le_map = _load_models()
+        models = _load_models()
+        rf, xgb, features, le_map = models["waterlogging"]
 
         # Use engineered current_data values where available, else 0.0
         feature_values = [current_data.get(f, 0.0) for f in features]
@@ -221,5 +232,57 @@ class DashboardService:
             ]
         }
 
+
+    def get_npk_ph_forecast(self) -> dict:
+        """
+        Performs 7-day NPK/pH prediction using the Multi-Output Regressor.
+        Inputs (7): temp_soil, moisture, ec, humidity, temp_air, hour, temp_diff
+        Outputs (4): N, P, K, pH
+        """
+        current = data_store.get_current_data()
+        models = _load_models()
+        model, scaler_x, scaler_y = models["npk_ph"]
+        
+        # 1. Construct 7-element feature vector
+        # Integrate weather forecast into the model inputs
+        weather = weather_service.get_weather_forecast()
+        avg_temp_air = np.mean(weather["hourly_temp_c"][:24]) if weather["hourly_temp_c"] else current["air_temp"]
+        avg_humidity = np.mean(weather["hourly_humidity_pct"][:24]) if weather["hourly_humidity_pct"] else current["humidity"]
+        
+        temp_soil = current["soil_temp"]
+        moisture = current["soil_moisture"]
+        ec = current["ec"]
+        humidity = avg_humidity # Use forecasted average
+        temp_air = avg_temp_air # Use forecasted average
+        hour = datetime.now().hour
+        temp_diff = temp_soil - temp_air
+        
+        feature_vector = np.array([[
+            temp_soil, moisture, ec, humidity, temp_air, hour, temp_diff
+        ]])
+        
+        # 2. Scale -> Predict -> Inverse Scale
+        try:
+            X_scaled = scaler_x.transform(feature_vector)
+            y_scaled = model.predict(X_scaled)
+            y_final = scaler_y.inverse_transform(y_scaled)[0]
+            
+            # Map outputs: [N, P, K, pH]
+            return {
+                "N": float(y_final[0]),
+                "P": float(y_final[1]),
+                "K": float(y_final[2]),
+                "pH": float(y_final[3]),
+                "source": "cropiq_rf_model"
+            }
+        except Exception as e:
+            print(f"ERROR in NPK/pH prediction: {e}")
+            return {
+                "N": current["nitrogen"],
+                "P": current["phosphorus"],
+                "K": current["potassium"],
+                "pH": current["pH"],
+                "source": "fallback_current"
+            }
 
 dashboard_service = DashboardService()

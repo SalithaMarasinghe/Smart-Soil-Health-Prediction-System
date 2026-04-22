@@ -253,6 +253,22 @@ class DataStore:
         """Get the most recent sensor reading"""
         return self.historical_data[-1]
 
+    def get_management_features(self) -> dict:
+        """Calculate features based on management history (fertilization, etc.)"""
+        now = datetime.now(timezone.utc)
+        
+        # In a real app, this would query a 'management_events' collection
+        # For now, we'll use the mock data structure or a default
+        last_fert_date = now - timedelta(days=12) # Mock: 12 days ago
+        
+        days_since_fert = (now - last_fert_date).days
+        
+        return {
+            "days_since_last_fertilization": days_since_fert,
+            "last_fertilizer_type": "NPK 20-10-10",
+            "is_urea_used": True # Crucial for pH drift models
+        }
+
     def get_history(self, parameter: str, days: int):
         """Get historical data for a specific parameter (Used by Charting)"""
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)

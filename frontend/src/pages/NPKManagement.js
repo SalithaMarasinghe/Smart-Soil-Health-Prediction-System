@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiService } from "../services/api";
-import { TrendingDown, AlertCircle, Calendar, Package, Beaker, ArrowRight } from "lucide-react";
+import { TrendingDown, AlertCircle, Calendar, Package, Beaker, ArrowRight, ShieldAlert } from "lucide-react";
 import { Card } from "../components/ui/card";
+import NutrientGage from "../components/npk/NutrientGage";
+import FertilizationAdvisor from "../components/npk/FertilizationAdvisor";
 import { toast } from "sonner";
 import {
   LineChart,
@@ -135,134 +137,111 @@ const NPKManagement = () => {
         <p className="text-muted-foreground mt-1">Nutrient forecasting and fertilization planning</p>
       </div>
 
-      {/* Recommendation Alert */}
-      {predictions?.recommendation?.action === "fertilize" && (
-        <Card
-          data-testid="fertilization-alert"
-          className="p-6 border-l-4 border-l-warning bg-warning/5"
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-6 h-6 text-warning" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-manrope font-bold text-xl text-foreground mb-2">
-                Action Required: {predictions.recommendation.timing}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {predictions.recommendation.reason}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-card rounded-lg p-3 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Fertilizer Type</p>
-                  <p className="font-semibold text-foreground">{predictions.recommendation.fertilizer_type}</p>
-                </div>
-                <div className="bg-card rounded-lg p-3 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Amount Needed</p>
-                  <p className="font-semibold text-foreground">{predictions.recommendation.amount_kg} kg</p>
-                </div>
-                <div className="bg-card rounded-lg p-3 border border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Cost Savings</p>
-                  <p className="font-semibold text-success">LKR {predictions.recommendation.cost_savings}</p>
-                </div>
-              </div>
+      {/* Dynamic Recommendation Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <FertilizationAdvisor recommendation={predictions?.recommendation} />
+        </div>
+        
+        {/* Quick Insights / Alert Coordination */}
+        <div className="space-y-4">
+          <div className="bg-orange-50 border border-orange-200 dark:bg-orange-950/20 dark:border-orange-900/50 rounded-lg p-4 flex items-start gap-3">
+            <Beaker className="w-5 h-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-orange-800 dark:text-orange-200 text-sm">⚠️ pH Impact</h4>
+              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">Urea usage may drop pH by 0.03 units. Check pH trends before applying.</p>
+              <Link to="/ph-management" className="text-xs font-bold text-orange-900 dark:text-orange-400 mt-2 flex items-center gap-1 hover:underline">
+                PH MANAGEMENT <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
           </div>
-        </Card>
-      )}
-
-      {/* pH Coordination Alert */}
-      <div className="bg-orange-50 border border-orange-200 dark:bg-orange-950/20 dark:border-orange-900/50 rounded-lg p-4 flex items-start gap-3">
-        <Beaker className="w-5 h-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
-        <div>
-          <h4 className="font-semibold text-orange-800 dark:text-orange-200 text-sm">⚠️ pH Impact Alert</h4>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
-            <p className="text-sm text-orange-700 dark:text-orange-300">Urea will acidify soil (-0.025 pH/week). Consider alternatives.</p>
-            <Link to="/ph-management" className="text-sm font-medium text-orange-900 dark:text-orange-400 underline hover:text-orange-950 dark:hover:text-orange-200 flex items-center gap-1">
-              View pH predictions <ArrowRight className="w-3 h-3" />
-            </Link>
+          
+          <div className="bg-blue-50 border border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/50 rounded-lg p-4 flex items-start gap-3">
+            <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 text-sm">Next Observation</h4>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">Satellite data sync expected in 4 hours.</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Current Levels */}
-      <Card data-testid="current-npk-levels" className="p-6">
-        <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground">Current Nutrient Levels</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="text-center p-4 rounded-lg bg-primary/5">
-            <p className="text-sm text-muted-foreground mb-2">Nitrogen (N)</p>
-            <p className="font-manrope font-bold text-3xl text-primary mb-1">
-              {predictions?.current?.N?.toFixed(2)}
-            </p>
-            <p className="text-xs text-muted-foreground">mg/kg</p>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-warning/5">
-            <p className="text-sm text-muted-foreground mb-2">Phosphorus (P)</p>
-            <p className="font-manrope font-bold text-3xl text-warning mb-1">
-              {predictions?.current?.P?.toFixed(2)}
-            </p>
-            <p className="text-xs text-muted-foreground">mg/kg</p>
-          </div>
-          <div className="text-center p-4 rounded-lg bg-info/5">
-            <p className="text-sm text-muted-foreground mb-2">Potassium (K)</p>
-            <p className="font-manrope font-bold text-3xl text-info mb-1">
-              {predictions?.current?.K?.toFixed(2)}
-            </p>
-            <p className="text-xs text-muted-foreground">mg/kg</p>
-          </div>
-        </div>
-      </Card>
+      {/* Nutrient Health Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <NutrientGage 
+          label="Nitrogen (N)" 
+          value={predictions?.current?.N || 0} 
+          unit="mg/kg" 
+          optimalRange={{ min: 150, max: 250 }} 
+          color="#1A4D2E"
+        />
+        <NutrientGage 
+          label="Phosphorus (P)" 
+          value={predictions?.current?.P || 0} 
+          unit="mg/kg" 
+          optimalRange={{ min: 30, max: 60 }} 
+          color="#D97706"
+        />
+        <NutrientGage 
+          label="Potassium (K)" 
+          value={predictions?.current?.K || 0} 
+          unit="mg/kg" 
+          optimalRange={{ min: 200, max: 400 }} 
+          color="#0284C7"
+        />
+      </div>
 
-      {/* Historical Trends Chart */}
-      <Card data-testid="historical-trends-chart" className="p-6">
-        <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground">
-          Historical NPK Trends (Last 30 Days)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={formatHistoricalChartData()}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.5} />
-            <XAxis
-              dataKey="timestamp"
-              tickFormatter={(value) => format(new Date(value), "MMM dd")}
-              stroke="hsl(var(--chart-axis))"
-              style={{ fontSize: "12px" }}
-            />
-            <YAxis stroke="hsl(var(--chart-axis))" style={{ fontSize: "12px" }} label={{ value: 'mg/kg', angle: -90, position: 'insideLeft', fill: 'hsl(var(--chart-axis))', style: { fontSize: '12px' } }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ paddingTop: "10px" }} />
-            <Area type="monotone" dataKey="N" stroke="#1A4D2E" fill="#1A4D2E" fillOpacity={0.2} name="Nitrogen" />
-            <Area type="monotone" dataKey="P" stroke="#D97706" fill="#D97706" fillOpacity={0.2} name="Phosphorus" />
-            <Area type="monotone" dataKey="K" stroke="#0284C7" fill="#0284C7" fillOpacity={0.2} name="Potassium" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </Card>
+      {/* Data Visualizations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Historical Trends Chart */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-manrope font-semibold text-lg text-foreground">Historical Trends</h3>
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">Last 30 Days</span>
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={formatHistoricalChartData()}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} opacity={0.3} />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={(value) => format(new Date(value), "MMM dd")}
+                stroke="hsl(var(--chart-axis))"
+                fontSize={10}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis stroke="hsl(var(--chart-axis))" fontSize={10} tickLine={false} axisLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', paddingBottom: '20px' }} />
+              <Area type="monotone" dataKey="N" stroke="#1A4D2E" fill="#1A4D2E" fillOpacity={0.1} name="Nitrogen" />
+              <Area type="monotone" dataKey="P" stroke="#D97706" fill="#D97706" fillOpacity={0.1} name="Phosphorus" />
+              <Area type="monotone" dataKey="K" stroke="#0284C7" fill="#0284C7" fillOpacity={0.1} name="Potassium" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Card>
 
-      {/* Prediction Chart */}
-      <Card data-testid="npk-predictions-chart" className="p-6">
-        <h3 className="font-manrope font-semibold text-lg mb-4 text-foreground">
-          14-Day NPK Forecast
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={formatPredictionChartData()}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.5} />
-            <XAxis dataKey="day" stroke="hsl(var(--chart-axis))" style={{ fontSize: "12px" }} />
-            <YAxis stroke="hsl(var(--chart-axis))" style={{ fontSize: "12px" }} label={{ value: 'mg/kg', angle: -90, position: 'insideLeft', fill: 'hsl(var(--chart-axis))', style: { fontSize: '12px' } }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ paddingTop: "10px" }} />
-            <ReferenceLine y={150} stroke="#DC2626" strokeDasharray="3 3" label="N Threshold" />
-            <ReferenceLine y={30} stroke="#DC2626" strokeDasharray="3 3" label="P Threshold" />
-            <ReferenceLine y={200} stroke="#DC2626" strokeDasharray="3 3" label="K Threshold" />
-            <Line type="monotone" dataKey="N" stroke="#1A4D2E" strokeWidth={3} name="Nitrogen" dot={{ fill: "#1A4D2E", r: 5 }} />
-            <Line type="monotone" dataKey="P" stroke="#D97706" strokeWidth={3} name="Phosphorus" dot={{ fill: "#D97706", r: 5 }} />
-            <Line type="monotone" dataKey="K" stroke="#0284C7" strokeWidth={3} name="Potassium" dot={{ fill: "#0284C7", r: 5 }} />
-          </LineChart>
-        </ResponsiveContainer>
-        <div className="mt-4 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">Critical Thresholds:</span> Nitrogen: 150 mg/kg | Phosphorus: 30 mg/kg | Potassium: 200 mg/kg
-          </p>
-        </div>
-      </Card>
+        {/* Prediction Chart */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-manrope font-semibold text-lg text-foreground">Nutrient Depletion Forecast</h3>
+            <span className="text-xs text-muted-foreground bg-primary/10 text-primary px-2 py-1 rounded font-bold">14d Prediction</span>
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={formatPredictionChartData()}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" vertical={false} opacity={0.3} />
+              <XAxis dataKey="day" stroke="hsl(var(--chart-axis))" fontSize={10} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(var(--chart-axis))" fontSize={10} tickLine={false} axisLine={false} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '10px', paddingBottom: '20px' }} />
+              <ReferenceLine y={150} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'right', value: 'Crit', fill: '#ef4444', fontSize: 10 }} />
+              <Line type="monotone" dataKey="N" stroke="#1A4D2E" strokeWidth={3} name="Nitrogen" dot={{ r: 4, fill: "#1A4D2E" }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="P" stroke="#D97706" strokeWidth={3} name="Phosphorus" dot={{ r: 4, fill: "#D97706" }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="K" stroke="#0284C7" strokeWidth={3} name="Potassium" dot={{ r: 4, fill: "#0284C7" }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Card>
+      </div>
+
 
       {/* Fertilization History */}
       <Card data-testid="fertilization-history" className="p-6">

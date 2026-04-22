@@ -6,7 +6,7 @@ import AcidificationAnalysisCard from "../components/ph/AcidificationAnalysisCar
 import NutrientAvailabilityTable from "../components/ph/NutrientAvailabilityTable";
 import PhRecommendationCard from "../components/ph/PhRecommendationCard";
 import { toast } from "sonner";
-import { Loader2, Beaker } from "lucide-react";
+import { Loader2, Beaker, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const PhManagement = () => {
     const [loading, setLoading] = useState(true);
@@ -83,16 +83,19 @@ const PhManagement = () => {
             </div>
 
             {/* Coordination Alerts */}
-            <div className="bg-muted/30 border rounded-lg p-4">
-                <h3 className="font-medium mb-3 flex items-center gap-2">
-                    <ActivityIcon className="h-4 w-4" /> System Coordination
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-yellow-50 border border-yellow-200 p-3 rounded text-sm text-yellow-800">
-                        {data.coordination.alert_to_npk}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-warning/5 border border-warning/20 p-4 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-warning mt-0.5 flex-shrink-0" />
+                    <div>
+                        <h4 className="text-sm font-bold text-orange-800 dark:text-orange-200">NPK Impact</h4>
+                        <p className="text-xs text-orange-700/80 dark:text-orange-300/80 mt-1 leading-relaxed">{data.coordination.alert_to_npk}</p>
                     </div>
-                    <div className="bg-green-50 border border-green-200 p-3 rounded text-sm text-green-800">
-                        {data.coordination.alert_to_irrigation}
+                </div>
+                <div className="bg-success/5 border border-success/20 p-4 rounded-xl flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                    <div>
+                        <h4 className="text-sm font-bold text-green-800 dark:text-green-200">Irrigation Safety</h4>
+                        <p className="text-xs text-green-700/80 dark:text-green-300/80 mt-1 leading-relaxed">{data.coordination.alert_to_irrigation}</p>
                     </div>
                 </div>
             </div>
