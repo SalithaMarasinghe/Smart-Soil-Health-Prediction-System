@@ -33,12 +33,12 @@ const NutrientAvailabilityTable = ({ availability }) => {
             </CardHeader>
             <CardContent>
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-muted/50">
                         <TableRow>
-                            <TableHead>Nutrient</TableHead>
-                            <TableHead>Current (pH 6.8)</TableHead>
-                            <TableHead>If pH drops to 5.5</TableHead>
-                            <TableHead>Impact</TableHead>
+                            <TableHead className="font-bold">Nutrient</TableHead>
+                            <TableHead className="text-center font-bold">Current (6.8)</TableHead>
+                            <TableHead className="text-center font-bold">Risk (5.5)</TableHead>
+                            <TableHead className="text-right font-bold">Lockout Risk</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -48,35 +48,45 @@ const NutrientAvailabilityTable = ({ availability }) => {
                             const drop = currentVal - futureVal;
 
                             let impact = "Minimal";
-                            let rowClass = "";
-                            if (drop > 30) { impact = "Critical"; rowClass = "bg-red-50 dark:bg-red-950/20"; }
-                            else if (drop > 10) { impact = "Moderate"; rowClass = "bg-yellow-50 dark:bg-yellow-950/20"; }
+                            let statusColor = "text-green-500";
+                            let dotColor = "bg-green-500";
+                            
+                            if (drop > 30) { 
+                                impact = "Critical"; 
+                                statusColor = "text-red-500";
+                                dotColor = "bg-red-500";
+                            }
+                            else if (drop > 10) { 
+                                impact = "Moderate"; 
+                                statusColor = "text-orange-500";
+                                dotColor = "bg-orange-500";
+                            }
 
                             return (
-                                <TableRow key={n.key} className={rowClass}>
-                                    <TableCell className="font-medium">{n.name}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1">
-                                            {currentStatus[n.key]} <CheckCircle2 className="h-3 w-3 text-green-500" />
-                                        </div>
+                                <TableRow key={n.key} className="hover:bg-muted/30 transition-colors">
+                                    <TableCell className="font-semibold">{n.name}</TableCell>
+                                    <TableCell className="text-center">
+                                        <span className="font-bold text-green-600 dark:text-green-400">{currentStatus[n.key]}</span>
                                     </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-1">
+                                    <TableCell className="text-center">
+                                        <span className={`font-bold ${drop > 10 ? 'text-orange-600 dark:text-orange-400' : 'text-foreground'}`}>
                                             {futureStatus[n.key]}
-                                            {drop > 30 && <AlertCircle className="h-3 w-3 text-red-500" />}
-                                        </div>
+                                        </span>
                                     </TableCell>
-                                    <TableCell className="font-bold text-foreground">
-                                        {impact}
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <span className={`text-xs font-bold uppercase tracking-tighter ${statusColor}`}>{impact}</span>
+                                            <div className={`h-2 w-2 rounded-full ${dotColor} animate-pulse`} />
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             );
                         })}
                     </TableBody>
                 </Table>
-                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-300 text-sm rounded-md flex items-start gap-2">
-                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>{availability.if_pH_drops_to_5_5.warning}</p>
+                <div className="mt-4 p-4 bg-destructive/5 border border-destructive/20 text-destructive dark:text-red-400 text-xs rounded-lg flex items-start gap-3">
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p className="font-medium leading-relaxed">{availability.if_pH_drops_to_5_5.warning}</p>
                 </div>
             </CardContent>
         </Card>

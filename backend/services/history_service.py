@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta, timezone
 from services.data_store import data_store
+from services.weather_service import weather_service
+from services.dashboard_service import dashboard_service
 
 class HistoryService:
     def get_history(self, parameter: str, days: int) -> dict:
@@ -13,28 +14,45 @@ class HistoryService:
     # get_fertilization_history moved to services/npk_service.py
 
     def get_ph_predictions(self) -> dict:
-        current_ph = 6.8
+        current = data_store.get_current_data()
+        weather = weather_service.get_weather_forecast()
+        mgmt = data_store.get_management_features()
+        
+        current_ph = current.get("pH", 6.5)
+        
+        # ── Real ML Inference ─────────────────────────────────────
+        ml_forecast = dashboard_service.get_npk_ph_forecast()
+        ph_7d = ml_forecast["pH"]
+        
+        # Calculate drift rate based on ML delta
+        total_drift_per_week = ph_7d - current_ph
+        
+        predictions = {
+            "7d": ph_7d,
+            "30d": current_ph + (total_drift_per_week * 4.2),
+            "90d": current_ph + (total_drift_per_week * 12.8)
+        }
+
+        
+        status = "optimal" if 6.0 <= current_ph <= 7.0 else "acidic" if current_ph < 6.0 else "alkaline"
+        
         return {
             "current_status": {
                 "pH": current_ph,
-                "status": "optimal",
-                "range": "6.0-7.0",
-                "trend": "slowly_decreasing",
-                "buffer_capacity": "moderate (CEC 15, OM 3.2%)"
+                "status": status,
+                "range": "6.0-7.0 (Optimal)",
+                "trend": "decreasing" if total_drift_per_week < 0 else "increasing",
+                "buffer_capacity": mgmt.get("buffer_capacity", "Moderate (CEC 15)")
             },
-            "predictions": {
-                "7d": 6.75,
-                "30d": 6.5,
-                "90d": 6.2
-            },
+            "predictions": predictions,
             "drift_analysis": {
-                "rate": -0.025,
+                "rate": total_drift_per_week,
                 "unit": "pH units per week",
-                "cause": "Recent urea fertilization",
-                "time_to_critical": "120 days until pH 6.0"
+                "cause": "Historical drift + Management impact" if total_drift_per_week < 0 else "Balanced stabilization",
+                "time_to_critical": f"{int((current_ph - 6.0) / abs(total_drift_per_week))} weeks until critical (6.0)" if current_ph > 6.0 else "Already below critical"
             },
             "nutrient_availability": {
-                "current_pH_6_8": {
+                "current_pH_6_8": { # Label as general optimal
                     "nitrogen": "95%",
                     "phosphorus": "98%",
                     "potassium": "100%"
@@ -43,7 +61,7 @@ class HistoryService:
                     "nitrogen": "90%",
                     "phosphorus": "60%",
                     "potassium": "95%",
-                    "warning": "40% phosphorus loss, aluminum toxicity risk"
+                    "warning": "Phosphorus availability drops significantly below pH 5.8"
                 }
             },
             "recommendations": {

@@ -23,7 +23,7 @@ const PhOverviewCard = ({ data }) => {
                 <div className="flex justify-between items-end mb-4">
                     <div>
                         <div className={`text-2xl font-bold flex items-center gap-2 ${isOptimal ? "text-green-500" : "text-orange-500"}`}>
-                            {current_status}
+                            {current_status?.toFixed(2)}
                             <span className="text-sm font-normal text-muted-foreground">{isOptimal ? "✅" : "⚠️"}</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">Current pH</p>
@@ -35,7 +35,7 @@ const PhOverviewCard = ({ data }) => {
                             <span>Decreasing</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                            30d forecast: <span className="font-semibold text-foreground">{prediction_30d}</span>
+                            30d forecast: <span className="font-semibold text-foreground">{prediction_30d?.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>

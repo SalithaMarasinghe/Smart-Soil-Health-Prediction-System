@@ -45,7 +45,7 @@ const IrrigationStatusCard = ({ data }) => {
              */}
                         <div className="text-center">
                             <span className={`text-4xl font-bold ${getStatusColor(status)}`}>
-                                {soil_moisture}%
+                                {soil_moisture?.toFixed(2)}%
                             </span>
                             <p className="text-sm text-muted-foreground mt-1 capitalize">{status}</p>
                         </div>

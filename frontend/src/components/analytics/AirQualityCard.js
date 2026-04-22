@@ -37,7 +37,7 @@ const AirQualityCard = ({ data }) => {
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">AQI Value</span>
-              <p className="text-xl font-bold font-manrope">{data.aqi_value}</p>
+              <p className="text-xl font-bold font-manrope">{data.aqi_value?.toFixed(2)}</p>
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">CO (PPM)</span>
@@ -45,7 +45,7 @@ const AirQualityCard = ({ data }) => {
             </div>
             <div className="space-y-1">
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Raw Value</span>
-              <p className="text-xl font-bold font-manrope">{data.raw_value}</p>
+              <p className="text-xl font-bold font-manrope">{data.raw_value?.toFixed(2)}</p>
             </div>
           </div>
           

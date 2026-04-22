@@ -41,32 +41,17 @@ const WaterloggingMonitor = () => {
   };
 
   const generate48HourForecast = () => {
-    if (!riskData) return [];
+    if (!riskData || !riskData.hourly_forecast) return [];
 
-    const data = [];
-    const currentWFPS = riskData.current_wfps;
-    const peakWFPS = riskData.peak_wfps_predicted;
-    const rainfallAmount = riskData.rainfall_forecast_mm;
-
-    for (let i = 0; i <= 48; i += 4) {
-      let wfps = currentWFPS;
-      let rainfall = 0;
-
-      // Rainfall starts at hour 46 and peaks at hour 48
-      if (i >= 46) {
-        const rainIntensity = (i - 46) / 2;
-        rainfall = rainfallAmount * rainIntensity;
-        wfps = currentWFPS + (rainfall * 2);
-      }
-
-      data.push({
-        hour: `${i}h`,
-        wfps: Math.round(wfps * 10) / 10,
-        rainfall: Math.round(rainfall * 10) / 10,
-      });
-    }
-
-    return data;
+    // Use the real hourly forecast from the API
+    return riskData.hourly_forecast.map((item) => {
+      const hour = new Date(item.time).getHours();
+      return {
+        hour: `${hour}:00`,
+        wfps: riskData.current_wfps + (item.rain * 0.8), // simulated impact for chart trend
+        rainfall: item.rain,
+      };
+    });
   };
 
   const getRiskBadgeClass = (risk) => {
@@ -132,13 +117,13 @@ const WaterloggingMonitor = () => {
             <h3 className="font-manrope font-semibold text-base text-foreground">Current WFPS</h3>
           </div>
           <p className="font-manrope font-bold text-4xl text-foreground mb-1">
-            {riskData?.current_wfps}%
+            {riskData?.current_wfps?.toFixed(2)}%
           </p>
           <p className="text-sm text-muted-foreground">Water-Filled Pore Space</p>
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Soil Moisture</span>
-              <span className="font-semibold">{riskData?.current_moisture}%</span>
+              <span className="font-semibold">{riskData?.current_moisture?.toFixed(2)}%</span>
             </div>
           </div>
         </Card>
@@ -160,11 +145,11 @@ const WaterloggingMonitor = () => {
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-muted-foreground">Time to Event</span>
-              <span className="font-semibold">{riskData?.time_to_event_hours}h</span>
+              <span className="font-semibold">{riskData?.time_to_event_hours?.toFixed(2)}h</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Duration</span>
-              <span className="font-semibold">{riskData?.duration_hours}h</span>
+              <span className="font-semibold">{riskData?.duration_hours?.toFixed(2)}h</span>
             </div>
           </div>
         </Card>
@@ -177,13 +162,13 @@ const WaterloggingMonitor = () => {
             <h3 className="font-manrope font-semibold text-base text-foreground">Rainfall Forecast</h3>
           </div>
           <p className="font-manrope font-bold text-4xl text-foreground mb-1">
-            {riskData?.rainfall_forecast_mm}mm
+            {riskData?.rainfall_forecast_mm?.toFixed(2)}mm
           </p>
           <p className="text-sm text-muted-foreground">Expected in 48 hours</p>
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Peak WFPS</span>
-              <span className="font-semibold text-danger">{riskData?.peak_wfps_predicted}%</span>
+              <span className="font-semibold text-danger">{riskData?.peak_wfps_predicted?.toFixed(2)}%</span>
             </div>
           </div>
         </Card>
@@ -225,8 +210,75 @@ const WaterloggingMonitor = () => {
         </ResponsiveContainer>
         <div className="mt-4 p-4 bg-danger/5 dark:bg-danger/10 rounded-lg border border-danger/20 dark:border-danger/40">
           <p className="text-sm text-foreground">
-            <span className="font-semibold">Critical Alert:</span> {riskData?.cause}. WFPS is expected to reach {riskData?.peak_wfps_predicted}%, exceeding the critical threshold of 90%.
+            <span className="font-semibold">Critical Alert:</span> {riskData?.cause}. WFPS is expected to reach {riskData?.peak_wfps_predicted?.toFixed(2)}%, exceeding the critical threshold of 90%.
           </p>
+        </div>
+      </Card>
+
+      {/* Step 5 — 48-Hour Rainfall Forecast Section */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-manrope font-semibold text-lg text-foreground flex items-center gap-2">
+            <CloudRain className="w-5 h-5 text-primary" />
+            48-Hour Rainfall Forecast (Open-Meteo)
+          </h3>
+        </div>
+
+        {riskData?.rain_next_6h_mm > 5 && (
+          <div className="mb-4 p-4 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900 rounded-lg flex items-center gap-3 text-orange-800 dark:text-orange-400">
+            <AlertTriangle className="w-5 h-5" />
+            <p className="text-sm font-bold">
+              ⚠️ Rain expected within 6 hours — {riskData.rain_next_6h_mm}mm forecast
+            </p>
+          </div>
+        )}
+
+        <div className="h-[300px] w-full mb-6">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={riskData?.hourly_forecast || []}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--chart-grid))" opacity={0.3} />
+              <XAxis 
+                dataKey="time" 
+                tickFormatter={(val) => new Date(val).getHours() + ":00"}
+                stroke="hsl(var(--chart-axis))"
+                style={{ fontSize: "10px" }}
+              />
+              <YAxis 
+                stroke="hsl(var(--chart-axis))"
+                style={{ fontSize: "10px" }}
+                label={{ value: 'Rain (mm)', angle: -90, position: 'insideLeft', fill: 'hsl(var(--chart-axis))' }}
+              />
+              <Tooltip 
+                labelFormatter={(val) => new Date(val).toLocaleString()}
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
+              />
+              <Bar dataKey="rain" name="Rainfall">
+                {
+                  (riskData?.hourly_forecast || []).map((entry, index) => {
+                    let color = "#3b82f6"; // standard blue
+                    if (entry.rain > 15) color = "#ef4444"; // red
+                    else if (entry.rain > 5) color = "#f59e0b"; // orange
+                    return <rect key={`cell-${index}`} fill={color} />;
+                  })
+                }
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Next 6h</p>
+            <p className="text-xl font-bold">{riskData?.rain_next_6h_mm?.toFixed(1)}mm</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Next 24h</p>
+            <p className="text-xl font-bold">{riskData?.rain_next_24h_mm?.toFixed(1)}mm</p>
+          </div>
+          <div className="p-3 rounded-lg bg-muted/50 text-center">
+            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Next 48h</p>
+            <p className="text-xl font-bold">{riskData?.rainfall_forecast_mm?.toFixed(1)}mm</p>
+          </div>
         </div>
       </Card>
 
