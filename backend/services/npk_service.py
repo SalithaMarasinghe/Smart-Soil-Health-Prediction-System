@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from services.data_store import data_store
 from services.weather_service import weather_service
 from services.dashboard_service import dashboard_service
@@ -63,8 +64,7 @@ class NpkService:
             "14_days": {"N": n_14d, "P": p_14d, "K": k_14d},
             "recommendation": recommendation,
             "environmental_factors": {
-                "leaching_risk": "high" if leaching_multiplier > 1.4 else "medium" if leaching_multiplier > 1.1 else "low",
-                "biological_activity": "high" if activity_multiplier > 1.1 else "normal"
+                "leaching_risk": "high" if leaching_multiplier < 0.9 else "medium" if leaching_multiplier < 0.98 else "low"
             }
         }
 

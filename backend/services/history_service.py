@@ -48,7 +48,7 @@ class HistoryService:
             "drift_analysis": {
                 "rate": total_drift_per_week,
                 "unit": "pH units per week",
-                "cause": "Urea + Rainfall leaching" if weather_impact < 0 else "Urea mineralization",
+                "cause": "Historical drift + Management impact" if total_drift_per_week < 0 else "Balanced stabilization",
                 "time_to_critical": f"{int((current_ph - 6.0) / abs(total_drift_per_week))} weeks until critical (6.0)" if current_ph > 6.0 else "Already below critical"
             },
             "nutrient_availability": {
