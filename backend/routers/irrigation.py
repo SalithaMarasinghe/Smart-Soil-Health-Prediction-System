@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from models.irrigation import IrrigationPredictionResponse, IrrigationHistoryResponse, IrrigationLogRequest
 from services.irrigation_service import irrigation_service
 
@@ -10,9 +10,9 @@ async def get_irrigation_predictions():
     return irrigation_service.get_predictions()
 
 @router.get("/irrigation-history", response_model=IrrigationHistoryResponse)
-async def get_irrigation_history():
+async def get_irrigation_history(days: int = Query(default=30, ge=1, le=365)):
     """Returns past irrigation events"""
-    return irrigation_service.get_history()
+    return irrigation_service.get_history(days=days)
 
 @router.post("/irrigation/log")
 async def log_irrigation(event: IrrigationLogRequest):
