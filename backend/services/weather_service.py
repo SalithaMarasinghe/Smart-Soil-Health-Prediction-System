@@ -1,5 +1,4 @@
 import httpx
-import json
 from datetime import datetime
 from functools import lru_cache
 
@@ -48,8 +47,8 @@ class WeatherService:
         precip = hourly.get("precipitation", [])
         temps = hourly.get("temperature_2m", [])
         humids = hourly.get("relativehumidity_2m", [])
-
         # Calculate summaries
+
         rain_6h = sum(precip[:6]) if len(precip) >= 6 else sum(precip)
         rain_24h = sum(precip[:24]) if len(precip) >= 24 else sum(precip)
         rain_48h = sum(precip[:48]) if len(precip) >= 48 else sum(precip)
@@ -72,5 +71,4 @@ class WeatherService:
             "rain_next_48h_mm": rain_48h,
             "peak_rain_hour": peak_hour
         }
-
 weather_service = WeatherService()
