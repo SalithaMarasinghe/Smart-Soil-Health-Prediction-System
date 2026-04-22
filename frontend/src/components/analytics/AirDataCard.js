@@ -33,12 +33,12 @@ const AirDataCard = ({ data }) => {
         <CardContent className="pt-6 grid grid-cols-2 gap-4">
           <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/50 border border-border">
             <Droplets className="w-8 h-8 text-blue-400 mb-2" />
-            <span className="text-2xl font-bold font-manrope">{data.humidity}%</span>
+            <span className="text-2xl font-bold font-manrope">{data.humidity?.toFixed(2)}%</span>
             <span className="text-xs text-muted-foreground uppercase tracking-wider">Humidity</span>
           </div>
           <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/50 border border-border">
             <Thermometer className="w-8 h-8 text-destructive mb-2" />
-            <span className="text-2xl font-bold font-manrope">{data.temperature}°C</span>
+            <span className="text-2xl font-bold font-manrope">{data.temperature?.toFixed(2)}°C</span>
             <span className="text-xs text-muted-foreground uppercase tracking-wider">Temperature</span>
           </div>
         </CardContent>

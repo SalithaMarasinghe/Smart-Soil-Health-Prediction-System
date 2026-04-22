@@ -117,13 +117,13 @@ const WaterloggingMonitor = () => {
             <h3 className="font-manrope font-semibold text-base text-foreground">Current WFPS</h3>
           </div>
           <p className="font-manrope font-bold text-4xl text-foreground mb-1">
-            {riskData?.current_wfps}%
+            {riskData?.current_wfps?.toFixed(2)}%
           </p>
           <p className="text-sm text-muted-foreground">Water-Filled Pore Space</p>
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Soil Moisture</span>
-              <span className="font-semibold">{riskData?.current_moisture}%</span>
+              <span className="font-semibold">{riskData?.current_moisture?.toFixed(2)}%</span>
             </div>
           </div>
         </Card>
@@ -145,11 +145,11 @@ const WaterloggingMonitor = () => {
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-muted-foreground">Time to Event</span>
-              <span className="font-semibold">{riskData?.time_to_event_hours}h</span>
+              <span className="font-semibold">{riskData?.time_to_event_hours?.toFixed(2)}h</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Duration</span>
-              <span className="font-semibold">{riskData?.duration_hours}h</span>
+              <span className="font-semibold">{riskData?.duration_hours?.toFixed(2)}h</span>
             </div>
           </div>
         </Card>
@@ -162,13 +162,13 @@ const WaterloggingMonitor = () => {
             <h3 className="font-manrope font-semibold text-base text-foreground">Rainfall Forecast</h3>
           </div>
           <p className="font-manrope font-bold text-4xl text-foreground mb-1">
-            {riskData?.rainfall_forecast_mm}mm
+            {riskData?.rainfall_forecast_mm?.toFixed(2)}mm
           </p>
           <p className="text-sm text-muted-foreground">Expected in 48 hours</p>
           <div className="mt-4 pt-4 border-t border-border">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Peak WFPS</span>
-              <span className="font-semibold text-danger">{riskData?.peak_wfps_predicted}%</span>
+              <span className="font-semibold text-danger">{riskData?.peak_wfps_predicted?.toFixed(2)}%</span>
             </div>
           </div>
         </Card>
@@ -210,7 +210,7 @@ const WaterloggingMonitor = () => {
         </ResponsiveContainer>
         <div className="mt-4 p-4 bg-danger/5 dark:bg-danger/10 rounded-lg border border-danger/20 dark:border-danger/40">
           <p className="text-sm text-foreground">
-            <span className="font-semibold">Critical Alert:</span> {riskData?.cause}. WFPS is expected to reach {riskData?.peak_wfps_predicted}%, exceeding the critical threshold of 90%.
+            <span className="font-semibold">Critical Alert:</span> {riskData?.cause}. WFPS is expected to reach {riskData?.peak_wfps_predicted?.toFixed(2)}%, exceeding the critical threshold of 90%.
           </p>
         </div>
       </Card>

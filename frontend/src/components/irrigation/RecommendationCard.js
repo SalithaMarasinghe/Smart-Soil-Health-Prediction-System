@@ -43,7 +43,7 @@ const RecommendationCard = ({ recommendation, coordination, onAction }) => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <span className="text-xs text-muted-foreground">Volume</span>
-                                <p className="font-semibold">{water_volume_per_m2} L/m²</p>
+                                <p className="font-semibold">{water_volume_per_m2?.toFixed(2)} L/m²</p>
                             </div>
                             <div className="space-y-1">
                                 <span className="text-xs text-muted-foreground">Optimal Time</span>
@@ -62,15 +62,15 @@ const RecommendationCard = ({ recommendation, coordination, onAction }) => {
                             <div className="grid grid-cols-3 gap-2 text-sm text-center">
                                 <div>
                                     <p className="text-xs text-muted-foreground">Traditional</p>
-                                    <p>LKR {cost_traditional}</p>
+                                    <p>LKR {cost_traditional?.toFixed(2)}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Optimized</p>
-                                    <p className="font-bold text-green-600 dark:text-green-400">LKR {cost_optimized}</p>
+                                    <p className="font-bold text-green-600 dark:text-green-400">LKR {cost_optimized?.toFixed(2)}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Savings</p>
-                                    <p className="font-bold text-green-600 dark:text-green-400">LKR {savings}</p>
+                                    <p className="font-bold text-green-600 dark:text-green-400">LKR {savings?.toFixed(2)}</p>
                                 </div>
                             </div>
                         </div>

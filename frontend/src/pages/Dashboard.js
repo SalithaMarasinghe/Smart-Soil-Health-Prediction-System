@@ -163,21 +163,21 @@ const Dashboard = () => {
                 {getStatusIcon(status?.npk_status?.nitrogen)}
                 <span className="text-sm font-medium">Nitrogen (N)</span>
               </div>
-              <span className="font-manrope font-bold text-lg">{status?.nitrogen?.toFixed(1)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
+              <span className="font-manrope font-bold text-lg">{status?.nitrogen?.toFixed(2)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getStatusIcon(status?.npk_status?.phosphorus)}
                 <span className="text-sm font-medium">Phosphorus (P)</span>
               </div>
-              <span className="font-manrope font-bold text-lg">{status?.phosphorus?.toFixed(1)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
+              <span className="font-manrope font-bold text-lg">{status?.phosphorus?.toFixed(2)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {getStatusIcon(status?.npk_status?.potassium)}
                 <span className="text-sm font-medium">Potassium (K)</span>
               </div>
-              <span className="font-manrope font-bold text-lg">{status?.potassium?.toFixed(1)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
+              <span className="font-manrope font-bold text-lg">{status?.potassium?.toFixed(2)} <span className="text-xs text-muted-foreground">mg/kg</span></span>
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-4">All nutrients at optimal levels</p>
@@ -194,7 +194,7 @@ const Dashboard = () => {
           </h3>
           <div className="flex flex-col items-center justify-center py-2">
             <p className="font-manrope font-bold text-4xl text-foreground">
-              {waterloggingData?.ml_hours_until_waterlogging?.toFixed(1) ?? '--'}
+              {waterloggingData?.ml_hours_until_waterlogging?.toFixed(2) ?? '--'}
               <span className="text-sm font-medium text-muted-foreground ml-1">hrs</span>
             </p>
             <p className={`font-manrope font-bold text-lg uppercase mt-1 truncate ${getRiskColor(waterloggingData?.ml_risk_class?.toLowerCase()) === 'danger' ? 'text-danger' : ''}`}>
@@ -238,7 +238,7 @@ const Dashboard = () => {
                 }`}>
                 {waterloggingData?.ml_risk_class ?? status?.waterlogging_risk}
               </p>
-              <p className="text-sm text-muted-foreground">WFPS: {status?.wfps?.toFixed(1)}%</p>
+              <p className="text-sm text-muted-foreground">WFPS: {status?.wfps?.toFixed(2)}%</p>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">Heavy rain expected in 48 hours</p>
@@ -280,18 +280,18 @@ const Dashboard = () => {
             <div className="text-center py-4">
               <Cloud className="w-12 h-12 text-info mx-auto mb-3" strokeWidth={1.5} />
               <p className="font-manrope font-bold text-3xl text-foreground mb-1">
-                {waterloggingData ? `${waterloggingData.rainfall_forecast_mm.toFixed(1)}mm` : '--'}
+                {waterloggingData ? `${waterloggingData.rainfall_forecast_mm.toFixed(2)}mm` : '--'}
               </p>
               <p className="text-sm text-muted-foreground">Expected rainfall (48h)</p>
             </div>
             <div className="pt-4 border-t border-border mt-3">
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="text-muted-foreground">Temperature</span>
-                <span className="font-semibold">{status?.air_temp?.toFixed(1)}°C</span>
+                <span className="font-semibold">{status?.air_temp?.toFixed(2)}°C</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Humidity</span>
-                <span className="font-semibold">{status?.humidity}%</span>
+                <span className="font-semibold">{status?.humidity?.toFixed(2)}%</span>
               </div>
             </div>
           </div>
@@ -306,19 +306,19 @@ const Dashboard = () => {
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Moisture</span>
-              <span className="font-semibold">{status?.soil_moisture}%</span>
+              <span className="font-semibold">{status?.soil_moisture?.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">pH Level</span>
-              <span className="font-semibold">{status?.pH}</span>
+              <span className="font-semibold">{status?.pH?.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Temperature</span>
-              <span className="font-semibold">{status?.soil_temp}°C</span>
+              <span className="font-semibold">{status?.soil_temp?.toFixed(2)}°C</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">EC</span>
-              <span className="font-semibold">{status?.ec} dS/m</span>
+              <span className="font-semibold">{status?.ec?.toFixed(2)} dS/m</span>
             </div>
           </div>
         </Card>
@@ -393,7 +393,7 @@ const Dashboard = () => {
                   stroke={waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8"}
                   strokeDasharray="5 5"
                   label={{
-                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(1)}h)`,
+                    value: `Predicted Event (T+${waterloggingData.ml_hours_until_waterlogging.toFixed(2)}h)`,
                     fill: waterloggingData.ml_alert_active ? "#DC2626" : "#94A3B8",
                     fontSize: 10,
                     position: 'top'

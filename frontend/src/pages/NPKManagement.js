@@ -192,21 +192,21 @@ const NPKManagement = () => {
           <div className="text-center p-4 rounded-lg bg-primary/5">
             <p className="text-sm text-muted-foreground mb-2">Nitrogen (N)</p>
             <p className="font-manrope font-bold text-3xl text-primary mb-1">
-              {predictions?.current?.N}
+              {predictions?.current?.N?.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">mg/kg</p>
           </div>
           <div className="text-center p-4 rounded-lg bg-warning/5">
             <p className="text-sm text-muted-foreground mb-2">Phosphorus (P)</p>
             <p className="font-manrope font-bold text-3xl text-warning mb-1">
-              {predictions?.current?.P}
+              {predictions?.current?.P?.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">mg/kg</p>
           </div>
           <div className="text-center p-4 rounded-lg bg-info/5">
             <p className="text-sm text-muted-foreground mb-2">Potassium (K)</p>
             <p className="font-manrope font-bold text-3xl text-info mb-1">
-              {predictions?.current?.K}
+              {predictions?.current?.K?.toFixed(2)}
             </p>
             <p className="text-xs text-muted-foreground">mg/kg</p>
           </div>

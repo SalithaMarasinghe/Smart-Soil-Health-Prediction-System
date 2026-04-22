@@ -29,7 +29,7 @@ const PhStatusCard = ({ data }) => {
             <CardContent>
                 <div className="flex flex-col items-center justify-center py-2">
                     <div className={`text-5xl font-bold mb-2 ${getStatusColor(pH)}`}>
-                        {pH}
+                        {pH?.toFixed(2)}
                     </div>
                     <div className={`px-3 py-1 rounded-full text-sm font-medium mb-4 ${status === "optimal" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-800"
                         }`}>

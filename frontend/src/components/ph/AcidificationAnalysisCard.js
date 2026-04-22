@@ -33,7 +33,7 @@ const AcidificationAnalysisCard = ({ analysis, currentPh }) => {
                         <span className="text-xs text-muted-foreground block mb-1">Drift Rate</span>
                         <div className="flex items-center gap-1">
                             <Activity className="h-3 w-3 text-red-500" />
-                            <span className="font-bold text-red-600">{rate}</span>
+                            <span className="font-bold text-red-600">{rate?.toFixed(2)}</span>
                         </div>
                         <span className="text-xs text-muted-foreground">{unit}</span>
                     </div>
@@ -49,9 +49,9 @@ const AcidificationAnalysisCard = ({ analysis, currentPh }) => {
 
                 <div className="space-y-2">
                     <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Safe (7.0)</span>
-                        <span>Current ({currentPh})</span>
-                        <span>Critical (6.0)</span>
+                        <span>Safe (7.00)</span>
+                        <span>Current ({currentPh?.toFixed(2)})</span>
+                        <span>Critical (6.00)</span>
                     </div>
                     <div className="h-4 w-full bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden relative">
                         <div

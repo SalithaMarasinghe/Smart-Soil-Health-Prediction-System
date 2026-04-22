@@ -39,15 +39,15 @@ const SoilSensorCard = ({ data }) => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm">Nitrogen (N)</span>
-              <span className="font-bold">{data.nitrogen} mg/kg</span>
+              <span className="font-bold">{data.nitrogen?.toFixed(2)} mg/kg</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Phosphorus (P)</span>
-              <span className="font-bold">{data.phosphorus} mg/kg</span>
+              <span className="font-bold">{data.phosphorus?.toFixed(2)} mg/kg</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Potassium (K)</span>
-              <span className="font-bold">{data.potassium} mg/kg</span>
+              <span className="font-bold">{data.potassium?.toFixed(2)} mg/kg</span>
             </div>
           </CardContent>
         </Card>
@@ -63,28 +63,28 @@ const SoilSensorCard = ({ data }) => {
                 <Zap className="w-4 h-4 text-warning" />
                 <span>Electrical Cond.</span>
               </div>
-              <span className="font-bold">{data.ec} mS/cm</span>
+              <span className="font-bold">{data.ec?.toFixed(2)} mS/cm</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <Droplet className="w-4 h-4 text-blue-500" />
                 <span>Moisture</span>
               </div>
-              <span className="font-bold">{data.moisture}%</span>
+              <span className="font-bold">{data.moisture?.toFixed(2)}%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <Thermometer className="w-4 h-4 text-destructive" />
                 <span>Temperature</span>
               </div>
-              <span className="font-bold">{data.temperature}°C</span>
+              <span className="font-bold">{data.temperature?.toFixed(2)}°C</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <Sprout className="w-4 h-4 text-primary" />
                 <span>pH Level</span>
               </div>
-              <span className="font-bold">{data.ph}</span>
+              <span className="font-bold">{data.ph?.toFixed(2)}</span>
             </div>
           </CardContent>
         </Card>
